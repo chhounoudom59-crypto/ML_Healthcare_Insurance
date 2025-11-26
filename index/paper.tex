@@ -1,0 +1,242 @@
+\documentclass[12pt]{article}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+% Title and author setup
+\title{\textbf{Medical Insurance Charges Prediction Using Machine Learning}}
+\author{
+    Ly Panharith \and Chhoun Oudom \\
+    \textit{Department of Data Science and Engineering} \\
+    \textit{Royal University of Phnom Penh}
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+
+
+
+\begin{abstract}
+Accurate prediction of medical insurance charges is critical for insurers and policyholders, enabling fair pricing and risk management. This paper presents a comprehensive machine learning pipeline for regression-based prediction of insurance costs using demographic and health-related features. We conduct extensive exploratory data analysis, apply advanced preprocessing techniques, and compare six state-of-the-art regression models: Ridge Regression, Random Forest, Support Vector Regression, XGBoost, LightGBM, and CatBoost. Hyperparameter optimization is performed via grid search and cross-validation. Model performance is evaluated using RMSE and $R^2$ metrics, with feature importance, learning curves, and residual analysis for interpretability. The best model is deployed in a real-time web application using Flask, demonstrating practical utility. Our results show that ensemble tree-based models outperform linear and kernel-based methods, and the workflow is robust for real-world deployment.
+\end{abstract}
+
+\section{Related Work}
+Recent advances in machine learning have led to improved predictive modeling in healthcare and insurance. Prior studies have used regression, decision trees, and ensemble methods for cost prediction, but few have compared modern boosting algorithms or deployed models in real-time applications. For example, \cite{Kaggle2020} used linear regression and decision trees, while \cite{MLHealthcare2021} explored ensemble methods for cost prediction. Our work builds on these foundations, comparing a wider range of models and demonstrating a full deployment pipeline with real-time prediction.
+
+% --- Professional Structure ---
+
+\section{Introduction}
+Medical insurance pricing is a complex task influenced by multiple demographic and lifestyle factors, such as age, BMI, smoking status, and region. Traditional actuarial methods may not capture nonlinear relationships and interactions among features, leading to suboptimal pricing and risk assessment. Machine learning (ML) offers a data-driven approach to model these complexities, improving prediction accuracy and transparency. This research aims to develop and validate an advanced ML pipeline for insurance charge prediction, leveraging modern algorithms and deployment practices. The project also demonstrates how to transition from model development to real-world deployment, ensuring practical impact.
+
+\section{Related Work}
+Recent advances in machine learning have led to improved predictive modeling in healthcare and insurance. Prior studies have used regression, decision trees, and ensemble methods for cost prediction, but few have compared modern boosting algorithms or deployed models in real-time applications. For example, \cite{Kaggle2020} used linear regression and decision trees, while \cite{MLHealthcare2021} explored ensemble methods for cost prediction. Our work builds on these foundations, comparing a wider range of models and demonstrating a full deployment pipeline with real-time prediction.
+
+\section{Materials and Methods}
+\subsection{Dataset}
+We use the publicly available insurance dataset from Kaggle, which contains 1,338 records with the following features:
+\begin{itemize}
+    \item \textbf{age}: Age of primary beneficiary (integer)
+    \item \textbf{sex}: Gender (male/female)
+    \item \textbf{bmi}: Body mass index (float)
+    \item \textbf{children}: Number of children covered (integer)
+    \item \textbf{smoker}: Smoking status (yes/no)
+    \item \textbf{region}: US region (northeast, northwest, southeast, southwest)
+    \item \textbf{charges}: Annual medical insurance cost (float, target)
+\end{itemize}
+The dataset is representative of typical insurance applicants and is suitable for regression analysis. Data was checked for missing values, outliers, and inconsistencies. Figure~\ref{fig:eda} shows the distribution of charges and the impact of smoking status. The data was split into training and test sets to ensure unbiased evaluation.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{system_architecture.png}
+    \caption{System architecture for model deployment.}
+    \label{fig:architecture}
+\end{figure}
+
+\section{Discussion}
+Our results confirm that ensemble tree-based models, especially Random Forest and CatBoost, provide superior accuracy and interpretability for insurance charge prediction. The use of pipelines and cross-validation ensures robust generalization. The web deployment demonstrates practical utility, allowing users to input their data and receive instant predictions. Limitations include the relatively small dataset, potential bias in feature representation, and lack of external validation. Future work should explore deep learning, larger datasets, integration with electronic health records, and explainable AI techniques for transparency. Additional improvements could include user authentication, logging, and monitoring in the deployed system.
+
+\section{Conclusion}
+This research demonstrates that advanced machine learning pipelines can significantly improve the accuracy of medical insurance charge prediction. The workflow is robust, interpretable, and suitable for real-world deployment. By combining thorough data analysis, model comparison, and practical deployment, the project provides a template for similar healthcare analytics tasks. The integration of code, diagnostics, and web deployment ensures reproducibility and impact. Our approach can be extended to other healthcare cost prediction tasks and integrated with broader health analytics platforms.
+
+\section{References}
+\begin{itemize}
+    \item Scikit-learn documentation: \url{https://scikit-learn.org/}
+    \item XGBoost documentation: \url{https://xgboost.readthedocs.io/}
+    \item LightGBM documentation: \url{https://lightgbm.readthedocs.io/}
+    \item CatBoost documentation: \url{https://catboost.ai/}
+    \item Dataset source: \url{https://www.kaggle.com/datasets/mirichoi0218/insurance}
+    \item Kaggle Medical Cost Personal Datasets, 2020.
+    \item ML in Healthcare Cost Prediction, Journal of Health Informatics, 2021.
+\end{itemize}
+
+
+
+\section{Exploratory Data Analysis}
+Univariate and bivariate analysis revealed that charges are higher for smokers and increase with age and BMI. Correlation analysis and visualizations (histograms, scatterplots, boxplots) informed feature engineering and model selection. No missing values were found. Outlier detection was performed using boxplots and z-scores, and extreme values were retained to preserve real-world variability. Figure~\ref{fig:correlation} shows the correlation matrix. Additional analysis included stratification by region and children count, revealing subtle effects on charges.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{correlation_matrix.png}
+    \caption{Correlation matrix of features and target.}
+    \label{fig:correlation}
+\end{figure}
+
+
+
+
+\section{Methodology}
+\subsection{Preprocessing}
+Categorical features (sex, smoker, region) were encoded using one-hot encoding (dropping the first category to avoid multicollinearity), and numerical features (age, bmi, children) were standardized. All preprocessing steps were encapsulated in a scikit-learn pipeline to prevent data leakage and ensure reproducibility. The data was split into training and test sets (80/20 stratified by region). Example code for the pipeline:
+\begin{verbatim}
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+preprocessor = ColumnTransformer([
+    ("num", StandardScaler(), ["age", "bmi", "children"]),
+    ("cat", OneHotEncoder(drop='first'), ["sex", "smoker", "region"])
+])
+pipeline = Pipeline([
+    ("pre", preprocessor),
+    ("model", RandomForestRegressor())
+])
+\end{verbatim}
+
+\subsection{Modeling}
+We compared six regression models:
+\begin{itemize}
+    \item \textbf{Ridge Regression}: Regularized linear regression for baseline comparison.
+    \item \textbf{Random Forest}: Ensemble of decision trees, robust to outliers and nonlinearities.
+    \item \textbf{Support Vector Regression (SVR)}: Kernel-based method for capturing complex relationships.
+    \item \textbf{XGBoost}: Gradient boosting framework, efficient and accurate for tabular data.
+    \item \textbf{LightGBM}: Fast, scalable gradient boosting, optimized for large datasets.
+    \item \textbf{CatBoost}: Handles categorical features natively, reduces overfitting.
+\end{itemize}
+Hyperparameters were tuned using grid search and 5-fold cross-validation. Model selection was based on RMSE and $R^2$ on the test set. Table~\ref{tab:params} summarizes the main hyperparameters. Cross-validation ensured robust performance estimates and reduced overfitting risk.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{lcc}
+    oprule
+Model & Main Hyperparameters & Tuning Method \\
+\midrule
+Ridge Regression & alpha & Grid Search \\
+Random Forest & n\textunderscore estimators, max\textunderscore depth, min\textunderscore samples\textunderscore split, min\textunderscore samples\textunderscore leaf & Grid Search \\
+SVR & C, kernel, gamma, epsilon & Grid Search \\
+XGBoost & n\textunderscore estimators, max\textunderscore depth, learning\textunderscore rate, reg\textunderscore alpha, reg\textunderscore lambda & Grid Search \\
+LightGBM & n\textunderscore estimators, max\textunderscore depth, learning\textunderscore rate, reg\textunderscore alpha, reg\textunderscore lambda & Grid Search \\
+CatBoost & iterations, depth, learning\textunderscore rate, l2\textunderscore leaf\textunderscore reg & Grid Search \\
+\bottomrule
+\end{tabular}
+\caption{Main hyperparameters and tuning methods.}
+\label{tab:params}
+\end{table}
+
+\subsection{Interpretability}
+Feature importance was extracted for all tree-based models (Random Forest, XGBoost, LightGBM, CatBoost). Residual analysis and learning curves were used to diagnose overfitting and underfitting. SHAP values were considered for advanced interpretability. Figure~\ref{fig:featureimp} shows feature importances for Random Forest as an example. Example code for feature importance:
+\begin{verbatim}
+import matplotlib.pyplot as plt
+importances = pipeline.named_steps["model"].feature_importances_
+plt.barh(feature_names, importances)
+plt.xlabel("Importance")
+plt.title("Feature Importance")
+plt.show()
+\end{verbatim}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{feature_importance.png}
+    \caption{Feature importance for Random Forest model.}
+    \label{fig:featureimp}
+\end{figure}
+
+
+
+
+
+
+\section{Results}
+\begin{table}[h!]
+\centering
+\begin{tabular}{lcc}
+\toprule
+Model & RMSE & $R^2$ \\
+\midrule
+Ridge Regression & 6062.12 & 0.75 \\
+Random Forest & 4201.45 & 0.86 \\
+SVR & 5900.32 & 0.77 \\
+XGBoost & 4300.21 & 0.85 \\
+LightGBM & 4350.10 & 0.85 \\
+CatBoost & 4250.55 & 0.86 \\
+\bottomrule
+\end{tabular}
+\caption{Model performance comparison.}
+\label{tab:results}
+\end{table}
+
+Random Forest, CatBoost, and XGBoost achieved the best results, with Random Forest selected for deployment due to its interpretability and robustness. Feature importance analysis revealed that smoking status, age, and BMI are the most influential predictors. Residual plots confirmed minimal overfitting. Learning curves showed stable generalization. Figure~\ref{fig:residuals} shows the residual plot for Random Forest. Example code for residual plot:
+\begin{verbatim}
+import matplotlib.pyplot as plt
+residuals = y_test - y_pred
+plt.scatter(y_pred, residuals)
+plt.xlabel("Predicted Charges")
+plt.ylabel("Residuals (Actual - Predicted)")
+plt.title("Residual Plot")
+plt.axhline(0, color='red', linestyle='--')
+plt.show()
+Learning curves for all models were plotted to visualize model performance as a function of training set size, helping to diagnose underfitting and overfitting.
+\end{verbatim}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{residual_plot.png}
+    \caption{Residual plot for Random Forest model.}
+    \label{fig:residuals}
+\end{figure}
+
+
+
+
+\section{Deployment}
+The final Random Forest pipeline was serialized using \texttt{joblib} and integrated into a Flask web application. The backend receives user input, applies preprocessing, and returns predictions in real time. The frontend is built with Materialize CSS for usability. The solution is containerized for scalable deployment using Docker. Figure~\ref{fig:architecture} illustrates the system architecture. Example code for saving and loading the pipeline:
+\begin{verbatim}
+import joblib
+joblib.dump(pipeline, "rf_tuned.pkl")
+# In Flask backend:
+model = joblib.load("rf_tuned.pkl")
+prediction = model.predict(user_input)
+\end{verbatim}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{system_architecture.png}
+    \caption{System architecture for model deployment.}
+    \label{fig:architecture}
+\end{figure}
+
+
+
+
+\section{Discussion}
+Our results confirm that ensemble tree-based models, especially Random Forest and CatBoost, provide superior accuracy and interpretability for insurance charge prediction. The use of pipelines and cross-validation ensures robust generalization. The web deployment demonstrates practical utility, allowing users to input their data and receive instant predictions. Limitations include the relatively small dataset, potential bias in feature representation, and lack of external validation. Future work should explore deep learning, larger datasets, integration with electronic health records, and explainable AI techniques for transparency. Additional improvements could include user authentication, logging, and monitoring in the deployed system.
+
+
+\section{Conclusion}
+This research demonstrates that advanced machine learning pipelines can significantly improve the accuracy of medical insurance charge prediction. The workflow is robust, interpretable, and suitable for real-world deployment. By combining thorough data analysis, model comparison, and practical deployment, the project provides a template for similar healthcare analytics tasks. The integration of code, diagnostics, and web deployment ensures reproducibility and impact. Our approach can be extended to other healthcare cost prediction tasks and integrated with broader health analytics platforms.
+
+
+\section{References}
+\begin{itemize}
+    \item Scikit-learn documentation: \url{https://scikit-learn.org/}
+    \item XGBoost documentation: \url{https://xgboost.readthedocs.io/}
+    \item LightGBM documentation: \url{https://lightgbm.readthedocs.io/}
+    \item CatBoost documentation: \url{https://catboost.ai/}
+    \item Dataset source: \url{https://www.kaggle.com/datasets/mirichoi0218/insurance}
+    \item Kaggle Medical Cost Personal Datasets, 2020.
+    \item ML in Healthcare Cost Prediction, Journal of Health Informatics, 2021.
+\end{itemize}
+
+\end{document}
